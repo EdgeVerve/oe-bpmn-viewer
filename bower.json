@@ -1,0 +1,23 @@
+{
+  "name": "oe-bpmn-viewer",
+  "main": "oe-bpmn-viewer.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.4.0",
+    "bpmn-js": "^0.26.4",
+    "oe-info": "^1.2.0",
+    "paper-menu-button": "1.5.2"
+  },
+  "keywords": [
+    "polymer",
+    "webcomponents",
+    "oe-ui"
+  ],
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "iron-image": "^1.2.6",
+    "iron-test-helpers": "^2.0.0"
+  }
+}
