@@ -33,7 +33,7 @@
               <oe-info label="Start" type="timestamp" value={{processToken.startTime}}></oe-info>
               <oe-info label="End" type="timestamp" value={{processToken.endTime}}></oe-info>
               <oe-info label="Status" value={{processToken.status}}></oe-info>
-              <oe-info label="Error" hidden$={{!processToken.message.error}} value={{processToken.message.error}}></oe-info>
+              <oe-info label="Error" hidden$={{!processToken.error.message}} value={{processToken.error.message}}></oe-info>
             </div>
             <div class="card-action">
               <template is="dom-if" if="[[_hasFailed(processToken)]]">
