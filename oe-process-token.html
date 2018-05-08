@@ -6,6 +6,7 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../paper-card/paper-card.html">
 <link rel="import" href="../oe-info/oe-info.html">
 <!--
 `oe-process-token` component is used to display process-token details
@@ -32,7 +33,7 @@
               <oe-info label="Start" type="timestamp" value={{processToken.startTime}}></oe-info>
               <oe-info label="End" type="timestamp" value={{processToken.endTime}}></oe-info>
               <oe-info label="Status" value={{processToken.status}}></oe-info>
-              <oe-info label="Error" hidden$={{!processToken.error}} value={{processToken.error.message}}></oe-info>
+              <oe-info label="Error" hidden$={{!processToken.message.error}} value={{processToken.message.error}}></oe-info>
             </div>
             <div class="card-action">
               <template is="dom-if" if="[[_hasFailed(processToken)]]">

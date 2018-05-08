@@ -5,7 +5,8 @@
     "polymer": "Polymer/polymer#^1.4.0",
     "bpmn-js": "^0.26.4",
     "oe-info": "^1.2.0",
-    "paper-menu-button": "1.5.2"
+    "paper-menu-button": "1.5.2",
+    "paper-card": "PolymerElements/paper-card#1.1.6"
   },
   "keywords": [
     "polymer",

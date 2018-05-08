@@ -116,11 +116,10 @@ ser-scalable=yes">
             "name" : "End1",
             "startTime" : "2018-01-22T10:01:55.800Z",
             "bpmnId" : "EndEvent_1xyxp7m",
-            "error" : "The error is here",
+            
             "id" : "a49e4926-a29b-49e0-878b-835520b1c480",
-            "status" : "complete",
-            "message" : {},
-            "endTime" : "2018-01-22T10:01:55.836Z"
+            "status" : "failed",
+            "message" : {"error" : "The error is here"}
         }
     },
     "_processVariables" : {
@@ -170,9 +169,13 @@ ser-scalable=yes">
   }
 
 
-  function setProcessInstance(){
+  function toggleProcessInstance(){
     var oeViewer = document.getElementById('viewer');
-    oeViewer.set('processInstance', piData);
+    if(oeViewer.processInstance){
+      oeViewer.set('processInstance', undefined);
+    } else {
+      oeViewer.set('processInstance', piData);
+    }
   }
 </script>
 
@@ -186,7 +189,7 @@ ser-scalable=yes">
         <input type="button" data-index="0" onclick="setXml(0)" value="Xml-1">
         <input type="button" data-index="1" onclick="setXml(1)" value="Xml-2">
         <input type="button" data-index="1" onclick="setXml(2)" value="Xml-3">
-        <input type="button" onclick="setProcessInstance()" value="Process Instance">
+        <input type="button" onclick="toggleProcessInstance()" value="Process Instance">
 
         <oe-bpmn-viewer id="viewer" style="height: 400px"></oe-bpmn-viewer>
       </template>
