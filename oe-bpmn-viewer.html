@@ -13,145 +13,161 @@
 @demo demo/demo-oe-bpmn-viewer.html
 -->
 <style>
-    .complete:not(.djs-connection) .djs-visual > :nth-child(1) {
-        fill: green !important; /* color elements as green */
-    }
-    .pending:not(.djs-connection) .djs-visual > :nth-child(1) {
-        fill: yellow !important; /* color elements as green */
-    }
-    .interrupted:not(.djs-connection) .djs-visual > :nth-child(1) {
-        fill: orange !important; /* color elements as green */
-    }
-    .failed:not(.djs-connection) .djs-visual > :nth-child(1) {
-        fill: red !important; /* color elements as green */
-    }
+  .complete:not(.djs-connection) .djs-visual> :nth-child(1) {
+    fill: green !important;
+    /* color elements as green */
+  }
+  
+  .pending:not(.djs-connection) .djs-visual> :nth-child(1) {
+    fill: yellow !important;
+    /* color elements as green */
+  }
+  
+  .interrupted:not(.djs-connection) .djs-visual> :nth-child(1) {
+    fill: orange !important;
+    /* color elements as green */
+  }
+  
+  .failed:not(.djs-connection) .djs-visual> :nth-child(1) {
+    fill: red !important;
+    /* color elements as green */
+  }
 </style>
 <dom-module id="oe-bpmn-viewer">
-    <template>
-        <style>
-            :host {
-                display: block;
-                width: 100%;
-            }
-            #canvas {
-                height: 300px;
-            }
-        </style>
-        <div id="canvas"></div>
-    </template>
-    <script>
-        Polymer({
-            is: 'oe-bpmn-viewer',
-            properties: {
-                /* BPMN Xml data as string*/
-                bpmnXml: {
-                    type: String,
-                    observer: '_bpmnXmlChanged'
-                },
-                /* workflow progress data as maintained by oe-workflow ProcessInstance */
-                processInstance: {
-                    type: Object,
-                    observer: '_processInstanceChanged'
-                },
-                /* Component name to display as overlay  (processToken and processInstanceId properties are set on this element)*/
-                overlayComponent: {
-                    type: String, 
-                    value: 'oe-process-token'
-                }
-            },
-            /**
-            * Fired when a flow element is double clicked.
-            *
-            * @event oe-bpmn-viewer-drilldown
-            * @param {string} type The element type (bpmn:UserTask, bpmn:EndEvent etc.)
-            * @param {string} bpmnId The element id (UserTask_1, BoundaryEvent_1v9ili6 etc.)
-            * @param {object} processInstance Current Process Instance. `undefined` if it is not set.
-            * @param {object} processToken The process token associated with current node. `undefined` if processInstance is not set, element has not been executed for current process or if the element is a sequence-flow or root element.
-            */
-             attached: function(){
-                var self = this;
-                var config = { container: this.$.canvas };
-                this.viewer = new BpmnJS(config);
+  <template>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+      }
+      #canvas {
+        height: 300px;
+      }
+    </style>
+    <div id="canvas"></div>
+  </template>
+  <script>
+    Polymer({
+      is: 'oe-bpmn-viewer',
+      properties: {
+        /* BPMN Xml data as string*/
+        bpmnXml: {
+          type: String,
+          observer: '_bpmnXmlChanged'
+        },
+        /* workflow progress data as maintained by oe-workflow ProcessInstance */
+        processInstance: {
+          type: Object,
+          observer: '_processInstanceChanged'
+        },
+        /* Component name to display as overlay  (processToken and processInstanceId properties are set on this element)*/
+        overlayComponent: {
+          type: String,
+          value: 'oe-process-token'
+        }
+      },
+      /**
+       * Fired when a flow element is double clicked.
+       *
+       * @event oe-bpmn-viewer-drilldown
+       * @param {string} type The element type (bpmn:UserTask, bpmn:EndEvent etc.)
+       * @param {string} bpmnId The element id (UserTask_1, BoundaryEvent_1v9ili6 etc.)
+       * @param {object} processInstance Current Process Instance. `undefined` if it is not set.
+       * @param {object} processToken The process token associated with current node. `undefined` if processInstance is not set, element has not been executed for current process or if the element is a sequence-flow or root element.
+       */
+      attached: function() {
+        var self = this;
+        var config = {
+          container: this.$.canvas
+        };
+        this.viewer = new BpmnJS(config);
 
-                var eventBus = this.viewer.get('eventBus');
-                eventBus.on('element.dblclick', function(e){
-                    var canvas = self.viewer.get('canvas');
-                    var rootElement = canvas.getRootElement();
-                    if(e.element && e.element !== rootElement){
-                        var bpmnId = e.element.id;
-                        var type = e.element.type;
-                        if(type && bpmnId){
-                            var token = (self.processInstance && self.processInstance._processTokens)?Object.values(self.processInstance._processTokens).find(function(v){
-                                return v.bpmnId === bpmnId;
-                            }):undefined;
-                            self.fire('oe-bpmn-viewer-drilldown', {type: type, bpmnId: bpmnId, processInstance: self.processInstance, processToken: token});
-                        }
-                    }
-                });
-            },
-            /**
-            * Fired when bpmn-xml is imported successfully
-            *
-            * @event oe-bpmn-viewer-loaded
-            */
-            /**
-            * Fired when bpmn-xml load fails.
-            *
-            * @event oe-bpmn-viewer-load-failed
-            * @param {Error} err event.detail points to the Error object
-            */
-            _bpmnXmlChanged: function(bpmnXml){
-                var self = this;
-                self.viewer.clear();
-                self.viewer.importXML(bpmnXml, function(err) {
-                    if (!err) {
-                      self.viewer.get('canvas').zoom('fit-viewport');
-                      if(self.processInstance){
-                          self._processInstanceChanged(self.processInstance);
-                      }
-                      self.fire('oe-bpmn-viewer-loaded')
-                    } else {
-                      console.warn('Unable to load xml:', err);
-                      self.fire('oe-bpmn-viewer-load-failed', err);
-                    }
-                });
-            },
-            _processInstanceChanged: function(instance) {
-                var self = this;
-                var canvas = self.viewer.get('canvas');
-                var rootElement = canvas.getRootElement();
-                if(rootElement && rootElement.children && rootElement.children.length>0) {
-                    var overlays = self.viewer.get('overlays');
-                    var elementRegistry = self.viewer.get('elementRegistry');
-
-                    /* Clear the highlighters and overlays*/
-                    rootElement.children.forEach(function(flowNode) {
-                        canvas.removeMarker(flowNode.id, 'complete');
-                        canvas.removeMarker(flowNode.id, 'pending');
-                        canvas.removeMarker(flowNode.id, 'interrupted');
-                        canvas.removeMarker(flowNode.id, 'failed');
-                        overlays.remove({ element: flowNode.id });
-                    });
-                    
-                    /* Set highlighting color for executed processes */
-                    if(instance && instance._processTokens){
-                        Object.values(instance._processTokens).forEach(function(token){
-                            canvas.addMarker(token.bpmnId, token.status);
-                            /* Create overlay to show the status */
-                            var tokenOverlay = document.createElement(self.overlayComponent);
-                            overlays.add(token.bpmnId, {
-                                html: tokenOverlay,
-                                position:{
-                                    top: 0,
-                                    left: 0
-                                }
-                            });
-                            tokenOverlay.set('processToken', token);
-                            tokenOverlay.set('processInstanceId', instance.id);
-                        });    
-                    }
-                }
+        var eventBus = this.viewer.get('eventBus');
+        eventBus.on('element.dblclick', function(e) {
+          var canvas = self.viewer.get('canvas');
+          var rootElement = canvas.getRootElement();
+          if (e.element && e.element !== rootElement) {
+            var bpmnId = e.element.id;
+            var type = e.element.type;
+            if (type && bpmnId) {
+              var token = (self.processInstance && self.processInstance._processTokens) ? Object.values(self.processInstance._processTokens).find(function(v) {
+                return v.bpmnId === bpmnId;
+              }) : undefined;
+              self.fire('oe-bpmn-viewer-drilldown', {
+                type: type,
+                bpmnId: bpmnId,
+                processInstance: self.processInstance,
+                processToken: token
+              });
             }
+          }
         });
-    </script>
+      },
+      /**
+       * Fired when bpmn-xml is imported successfully
+       *
+       * @event oe-bpmn-viewer-loaded
+       */
+      /**
+       * Fired when bpmn-xml load fails.
+       *
+       * @event oe-bpmn-viewer-load-failed
+       * @param {Error} err event.detail points to the Error object
+       */
+      _bpmnXmlChanged: function(bpmnXml) {
+        var self = this;
+        self.viewer.clear();
+        self.viewer.importXML(bpmnXml, function(err) {
+          if (!err) {
+            self.viewer.get('canvas').zoom('fit-viewport');
+            if (self.processInstance) {
+              self._processInstanceChanged(self.processInstance);
+            }
+            self.fire('oe-bpmn-viewer-loaded')
+          } else {
+            console.warn('Unable to load xml:', err);
+            self.fire('oe-bpmn-viewer-load-failed', err);
+          }
+        });
+      },
+      _processInstanceChanged: function(instance) {
+        var self = this;
+        var canvas = self.viewer.get('canvas');
+        var rootElement = canvas.getRootElement();
+        if (rootElement && rootElement.children && rootElement.children.length > 0) {
+          var overlays = self.viewer.get('overlays');
+          var elementRegistry = self.viewer.get('elementRegistry');
+
+          /* Clear the highlighters and overlays*/
+          rootElement.children.forEach(function(flowNode) {
+            canvas.removeMarker(flowNode.id, 'complete');
+            canvas.removeMarker(flowNode.id, 'pending');
+            canvas.removeMarker(flowNode.id, 'interrupted');
+            canvas.removeMarker(flowNode.id, 'failed');
+            overlays.remove({
+              element: flowNode.id
+            });
+          });
+
+          /* Set highlighting color for executed processes */
+          if (instance && instance._processTokens) {
+            Object.values(instance._processTokens).forEach(function(token) {
+              canvas.addMarker(token.bpmnId, token.status);
+              /* Create overlay to show the status */
+              var tokenOverlay = document.createElement(self.overlayComponent);
+              overlays.add(token.bpmnId, {
+                html: tokenOverlay,
+                position: {
+                  top: 0,
+                  left: 0
+                }
+              });
+              tokenOverlay.set('processToken', token);
+              tokenOverlay.set('processInstanceId', instance.id);
+            });
+          }
+        }
+      }
+    });
+  </script>
 </dom-module>

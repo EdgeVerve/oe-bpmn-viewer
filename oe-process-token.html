@@ -11,72 +11,70 @@
 `oe-process-token` component is used to display process-token details
 -->
 <dom-module id="oe-process-token">
-    <template>
-        <style>
-            :host {
-                display: block;
-                --paper-menu-button-dropdown:{
-                    min-width: 400px;
-                }
-            }
-            .x2 >* {
-                width: 50%;
-            }
-        </style>
-
-        <div class="layout horizontal">
-                <paper-menu-button>
-                    <paper-icon-button slot="dropdown-trigger" class="dropdown-trigger" icon="speaker-notes" alt="more"></paper-icon-button>
-                    <div slot="dropdown-content" class="dropdown-content">
-                        <paper-card heading=[[processToken.name]]>
-                            <div class="card-content x2 layout horizontal wrap">
-                                    <oe-info label="Start" type="timestamp" value={{processToken.startTime}}></oe-info>
-                                    <oe-info label="End" type="timestamp" value={{processToken.endTime}}></oe-info>
-                                    <oe-info label="Status" value={{processToken.status}}></oe-info>
-                                    <oe-info label="Error" hidden$={{!processToken.error}} value={{processToken.error.message}}></oe-info>
-                            </div>
-                            <div class="card-action">
-                                <template is="dom-if" if="[[_hasFailed(processToken)]]">
-                                    <paper-icon-button icon="refresh" on-tap="_rerun"></paper-icon-button>
-                                </template>          
-                            </div>
-                        </paper-card>
-                    </div>
-            </paper-menu-button>
+  <template>
+    <style>
+      :host {
+        display: block;
+        --paper-menu-button-dropdown:{
+          min-width: 400px;
+        }
+      }
+      .x2 >* {
+        width: 50%;
+      }
+    </style>
+    <div class="layout horizontal">
+      <paper-menu-button>
+        <paper-icon-button slot="dropdown-trigger" class="dropdown-trigger" icon="speaker-notes" alt="more"></paper-icon-button>
+        <div slot="dropdown-content" class="dropdown-content">
+          <paper-card heading=[[processToken.name]]>
+            <div class="card-content x2 layout horizontal wrap">
+              <oe-info label="Start" type="timestamp" value={{processToken.startTime}}></oe-info>
+              <oe-info label="End" type="timestamp" value={{processToken.endTime}}></oe-info>
+              <oe-info label="Status" value={{processToken.status}}></oe-info>
+              <oe-info label="Error" hidden$={{!processToken.error}} value={{processToken.error.message}}></oe-info>
+            </div>
+            <div class="card-action">
+              <template is="dom-if" if="[[_hasFailed(processToken)]]">
+                <paper-icon-button icon="refresh" on-tap="_rerun"></paper-icon-button>
+              </template>
+            </div>
+          </paper-card>
         </div>
-
-    </template>
-    <script>
-        Polymer({
-            is: 'oe-process-token',
-            properties: {
-                processToken: {
-                    type: Object
-                },
-                processInstanceId: {
-                    type: String
-                }
-            },
-            _hasFailed: function(processToken){
-                return (processToken && processToken.status==='failed')
-            },
-            /**
-            * Fired when a rerun button is clicked on the failed workflow node. Applications should listen to this event and trigger appropriate remote-API.
-            *
-            * @event oe-workflow-rerun
-            * @param {object} processInstanceId Process Instance Id.
-            * @param {object} processToken The process token associated with current node for which rerun is requested.
-            */
-            _rerun: function(evt){
-                var self = this;
-                var processToken = this.processToken;
-                if(processToken && processToken.status==='failed'){
-                    self.fire('oe-workflow-rerun', {
-                        processInstanceId: self.processInstanceId,
-                        processToken: self.processToken
-                    });
-                }
-            }
-        });
-    </script>
+      </paper-menu-button>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'oe-process-token',
+      properties: {
+        processToken: {
+          type: Object
+        },
+        processInstanceId: {
+          type: String
+        }
+      },
+      _hasFailed: function(processToken) {
+        return (processToken && processToken.status === 'failed')
+      },
+      /**
+       * Fired when a rerun button is clicked on the failed workflow node. Applications should listen to this event and trigger appropriate remote-API.
+       *
+       * @event oe-workflow-rerun
+       * @param {object} processInstanceId Process Instance Id.
+       * @param {object} processToken The process token associated with current node for which rerun is requested.
+       */
+      _rerun: function(evt) {
+        var self = this;
+        var processToken = this.processToken;
+        if (processToken && processToken.status === 'failed') {
+          self.fire('oe-workflow-rerun', {
+            processInstanceId: self.processInstanceId,
+            processToken: self.processToken
+          });
+        }
+      }
+    });
+  </script>
 </dom-module>
