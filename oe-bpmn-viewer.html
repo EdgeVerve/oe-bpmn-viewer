@@ -41,10 +41,11 @@
         width: 100%;
       }
       #canvas {
-        height: 300px;
+        height: 100%;
+        width: 100%;
       }
     </style>
-    <div id="canvas"></div>
+    <div id="canvas" on-track="_handleTrack"></div>
   </template>
   <script>
     Polymer({
@@ -64,6 +65,9 @@
         overlayComponent: {
           type: String,
           value: 'oe-process-token'
+        },
+        zoomLevel: {
+          type: Number
         }
       },
       /**
@@ -120,6 +124,12 @@
         self.viewer.importXML(bpmnXml, function(err) {
           if (!err) {
             self.viewer.get('canvas').zoom('fit-viewport');
+            /* At below zoom level, canvas is 100% */
+            self.__zoom100 = self.zoom();
+
+            if(self.zoomLevel) {
+              self.viewer.get('canvas').zoom('fit-viewport');
+            }
             if (self.processInstance) {
               self._processInstanceChanged(self.processInstance);
             }
@@ -166,6 +176,39 @@
               tokenOverlay.set('processInstanceId', instance.id);
             });
           }
+        }
+      },
+      zoom: function(level){
+        var self = this;
+        var canvas = this.viewer.get('canvas');
+
+        if(!level) {
+          return canvas.zoom();
+        }
+         if(level<0.1) {
+          level = 0.1;
+         }
+
+        var sizeScale = level / self.__zoom100;
+        if(sizeScale>=1) {
+          var scaleX = Math.round(sizeScale*100)+'%';
+          this.$.canvas.style.height = scaleX;
+          this.$.canvas.style.width = scaleX;   
+        }
+        return canvas.zoom(level);
+      },
+      _handleTrack: function(e) {
+        switch(e.detail.state) {
+          case 'start':
+            break;
+          case 'track':
+            var canvas = this.viewer.get('canvas');
+            var matrix = canvas._viewport.transform.baseVal[0].matrix;
+            matrix.e+=e.detail.ddx;
+            matrix.f+=e.detail.ddy;
+            break;
+          case 'end':
+            break;
         }
       }
     });
