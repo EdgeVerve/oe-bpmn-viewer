@@ -5,7 +5,8 @@
 
 <link rel="import" href="../polymer/polymer.html">
 <script src="../bpmn-js/dist/bpmn-viewer.js"></script>
-<link rel="import" href="oe-process-token.html">
+<link rel="import" href="oe-processtoken-overlay.html">
+<link rel="import" href="oe-processtoken-panel.html">
 
 <!--
 `oe-bpmn-viewer` component can be used to display the bpmn diagram.
@@ -40,12 +41,23 @@
         display: block;
         width: 100%;
       }
-      #canvas {
+      .fullsize {
         height: 100%;
         width: 100%;
       }
+      #sidepanel {
+        display: none;
+      }
+
+      #sidepanel > * {
+        width: 100%;
+        height: 100%;
+      }
     </style>
-    <div id="canvas" on-track="_handleTrack"></div>
+    <div class="layout horizontal flex fullsize">
+      <div class="fullsize" id="canvas" on-track="_handleTrack"></div>
+      <div id="sidepanel"></div>
+    </div>
   </template>
   <script>
     Polymer({
@@ -62,9 +74,14 @@
           observer: '_processInstanceChanged'
         },
         /* Component name to display as overlay  (processToken and processInstanceId properties are set on this element)*/
-        overlayComponent: {
+        tokenViewer: {
           type: String,
-          value: 'oe-process-token'
+          value: 'oe-processtoken-panel'
+        },
+        /* Should the token details be displayed as overlay or sidepanel */
+        tokenViewMode: {
+          type: String,
+          value: 'sidepanel'
         },
         zoomLevel: {
           type: Number
@@ -86,6 +103,11 @@
         };
         this.viewer = new BpmnJS(config);
 
+        if(self.tokenViewMode === 'sidepanel') {
+          self._tokenViewer = document.createElement(self.tokenViewer);
+          self.$.sidepanel.appendChild(self._tokenViewer);
+        }
+
         var eventBus = this.viewer.get('eventBus');
         eventBus.on('element.dblclick', function(e) {
           var canvas = self.viewer.get('canvas');
@@ -106,6 +128,33 @@
             }
           }
         });
+
+        eventBus.on('element.click', function(e) {
+          var canvas = self.viewer.get('canvas');
+          var rootElement = canvas.getRootElement();
+          if (e.element && e.element !== rootElement) {
+            var bpmnId = e.element.id;
+            var type = e.element.type;
+            if (type && bpmnId) {
+              var token = (self.processInstance && self.processInstance._processTokens) ? Object.values(self.processInstance._processTokens).find(function(v) {
+                return v.bpmnId === bpmnId;
+              }) : undefined;
+              self.fire('oe-bpmn-viewer-selection', {
+                type: type,
+                bpmnId: bpmnId,
+                processInstance: self.processInstance,
+                processToken: token
+              });
+              if(token && self.processInstance && self.tokenViewMode === 'sidepanel') {
+                self._tokenViewer.set('processToken', token);
+                self._tokenViewer.set('processInstanceId', self.processInstance.id);
+                self.$.sidepanel.style.display = 'inline';
+              }
+            }
+          } else {
+            self.$.sidepanel.style.display = 'none';
+          }
+        });
       },
       /**
        * Fired when bpmn-xml is imported successfully
@@ -123,13 +172,13 @@
         self.viewer.clear();
         self.viewer.importXML(bpmnXml, function(err) {
           if (!err) {
-            self.viewer.get('canvas').zoom('fit-viewport');
+            //self.viewer.get('canvas').zoom('fit-viewport');
             /* At below zoom level, canvas is 100% */
-            self.__zoom100 = self.zoom();
+            //self.__zoom100 = self.zoom();
 
-            if(self.zoomLevel) {
-              self.viewer.get('canvas').zoom('fit-viewport');
-            }
+            //if(self.zoomLevel) {
+              self.viewer.get('canvas').zoom(self.zoomLevel || 'fit-viewport');
+            //}
             if (self.processInstance) {
               self._processInstanceChanged(self.processInstance);
             }
@@ -163,17 +212,20 @@
           if (instance && instance._processTokens) {
             Object.values(instance._processTokens).forEach(function(token) {
               canvas.addMarker(token.bpmnId, token.status);
-              /* Create overlay to show the status */
-              var tokenOverlay = document.createElement(self.overlayComponent);
-              overlays.add(token.bpmnId, {
-                html: tokenOverlay,
-                position: {
-                  top: 0,
-                  left: 0
-                }
-              });
-              tokenOverlay.set('processToken', token);
-              tokenOverlay.set('processInstanceId', instance.id);
+
+              if(self.tokenViewMode === 'overlay') {
+                /* Create overlay to show the status */
+                var tokenOverlay = document.createElement(self.tokenViewer);
+                overlays.add(token.bpmnId, {
+                  html: tokenOverlay,
+                  position: {
+                    top: 0,
+                    left: 0
+                  }
+                });
+                tokenOverlay.set('processToken', token);
+                tokenOverlay.set('processInstanceId', instance.id);
+              }
             });
           }
         }
@@ -189,12 +241,12 @@
           level = 0.1;
          }
 
-        var sizeScale = level / self.__zoom100;
-        if(sizeScale>=1) {
-          var scaleX = Math.round(sizeScale*100)+'%';
-          this.$.canvas.style.height = scaleX;
-          this.$.canvas.style.width = scaleX;   
-        }
+        // var sizeScale = level / self.__zoom100;
+        // if(sizeScale>=1) {
+        //   var scaleX = Math.round(sizeScale*100)+'%';
+        //   this.$.canvas.style.height = scaleX;
+        //   this.$.canvas.style.width = scaleX;   
+        // }
         return canvas.zoom(level);
       },
       _handleTrack: function(e) {

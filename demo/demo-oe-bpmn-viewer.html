@@ -32,11 +32,17 @@
           }
 
           ready(function(){
-            var viewer = document.getElementById('snippet');
-            viewer.addEventListener('oe-bpmn-viewer-drilldown', function(e){
+            //var viewer = document.getElementById('snippet');
+            window.addEventListener('oe-bpmn-viewer-drilldown', function(e){
               alert(e.type+'  '+ e.detail.type + '  ' + e.detail.bpmnId);
               console.log(e.type, e.detail);
-            });      
+            });
+
+            window.addEventListener('oe-workflow-rerun', function(e){
+              alert('Retry with /ProcessInstances/' + e.detail.processInstanceId + '/retry/'+ e.detail.processToken.id);
+              console.log(e.type, e.detail);
+            });
+              
           });
 
   var xmldata = ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<bpmn2:definitions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\" xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\" xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" xmlns:camunda=\"http://camunda.org/schema/1.0/bpmn\" id=\"sample-diagram\" targetNamespace=\"http://bpmn.io/schema/bpmn\" xsi:schemaLocation=\"http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd\">\n  <bpmn2:process id=\"Process_1\" name=\"BaseWorkflow\" isExecutable=\"false\">\n    <bpmn2:startEvent id=\"StartEvent_1\" name=\"Init\">\n      <bpmn2:outgoing>SequenceFlow_0n5tuob</bpmn2:outgoing>\n    </bpmn2:startEvent>\n    <bpmn2:sequenceFlow id=\"SequenceFlow_0n5tuob\" sourceRef=\"StartEvent_1\" targetRef=\"ScriptTask_0h53xio\" />\n    <bpmn2:scriptTask id=\"ScriptTask_0h53xio\" name=\"Prepare Transaction Key\" scriptFormat=\"javscript\">\n      <bpmn2:incoming>SequenceFlow_0n5tuob</bpmn2:incoming>\n      <bpmn2:outgoing>SequenceFlow_1tghhxz</bpmn2:outgoing>\n      <bpmn2:script><![CDATA[\nvar key = _instance.toObject()[_getPV(\"foreignKey\")];\n\n_setPV(\"transactionKey\",key);\n]]></bpmn2:script>\n    </bpmn2:scriptTask>\n    <bpmn2:endEvent id=\"EndEvent_0iqxc3z\" name=\"Exit\">\n      <bpmn2:incoming>SequenceFlow_0cz3jwp</bpmn2:incoming>\n    </bpmn2:endEvent>\n    <bpmn2:sequenceFlow id=\"SequenceFlow_0cz3jwp\" sourceRef=\"ServiceTask_1o4h05o\" targetRef=\"EndEvent_0iqxc3z\" />\n    <bpmn2:serviceTask id=\"ServiceTask_1o4h05o\" name=\"Conclude Related Transaction\">\n      <bpmn2:extensionElements>\n        <camunda:finalizeTransactionConnector>\n          <camunda:FTType>processvariable</camunda:FTType>\n          <camunda:FTValue>_action</camunda:FTValue>\n        </camunda:finalizeTransactionConnector>\n      </bpmn2:extensionElements>\n      <bpmn2:incoming>SequenceFlow_1bhwj13</bpmn2:incoming>\n      <bpmn2:outgoing>SequenceFlow_0cz3jwp</bpmn2:outgoing>\n    </bpmn2:serviceTask>\n    <bpmn2:callActivity id=\"CallActivity_1hv8r3v\" name=\"Approval Workflow\" calledElement=\"${CallActivityWorkflow}\">\n      <bpmn2:incoming>SequenceFlow_1tghhxz</bpmn2:incoming>\n      <bpmn2:outgoing>SequenceFlow_1bhwj13</bpmn2:outgoing>\n    </bpmn2:callActivity>\n    <bpmn2:sequenceFlow id=\"SequenceFlow_1tghhxz\" sourceRef=\"ScriptTask_0h53xio\" targetRef=\"CallActivity_1hv8r3v\" />\n    <bpmn2:sequenceFlow id=\"SequenceFlow_1bhwj13\" sourceRef=\"CallActivity_1hv8r3v\" targetRef=\"ServiceTask_1o4h05o\" />\n    <bpmn2:boundaryEvent id=\"BoundaryEvent_15yydqb\" name=\"Parent Model Signal Approved\" attachedToRef=\"CallActivity_1hv8r3v\">\n      <bpmn2:outgoing>SequenceFlow_1uy8xf5</bpmn2:outgoing>\n      <bpmn2:signalEventDefinition signalRef=\"Signal_00b7da8\" />\n    </bpmn2:boundaryEvent>\n    <bpmn2:boundaryEvent id=\"BoundaryEvent_0ep625i\" name=\"Parent Model Signal Rejected\" attachedToRef=\"CallActivity_1hv8r3v\">\n      <bpmn2:outgoing>SequenceFlow_1nfh3bv</bpmn2:outgoing>\n      <bpmn2:signalEventDefinition signalRef=\"Signal_1r9e37h\" />\n    </bpmn2:boundaryEvent>\n    <bpmn2:sequenceFlow id=\"SequenceFlow_1nfh3bv\" sourceRef=\"BoundaryEvent_0ep625i\" targetRef=\"ServiceTask_0e3ny5u\" />\n    <bpmn2:sequenceFlow id=\"SequenceFlow_1uy8xf5\" sourceRef=\"BoundaryEvent_15yydqb\" targetRef=\"ServiceTask_0zx0xvh\" />\n    <bpmn2:endEvent id=\"EndEvent_1ecm56z\" name=\"Reject Exit\">\n      <bpmn2:incoming>SequenceFlow_09r7cz0</bpmn2:incoming>\n    </bpmn2:endEvent>\n    <bpmn2:sequenceFlow id=\"SequenceFlow_09r7cz0\" sourceRef=\"ServiceTask_0e3ny5u\" targetRef=\"EndEvent_1ecm56z\" />\n    <bpmn2:endEvent id=\"EndEvent_1hyjnlk\" name=\"Approve Exit\">\n      <bpmn2:incoming>SequenceFlow_1u09hup</bpmn2:incoming>\n    </bpmn2:endEvent>\n    <bpmn2:sequenceFlow id=\"SequenceFlow_1u09hup\" sourceRef=\"ServiceTask_0zx0xvh\" targetRef=\"EndEvent_1hyjnlk\" />\n    <bpmn2:serviceTask id=\"ServiceTask_0e3ny5u\" name=\"Auto Reject Transaction\">\n      <bpmn2:extensionElements>\n        <camunda:finalizeTransactionConnector>        <camunda:FTType>reject</camunda:FTType>\n</camunda:finalizeTransactionConnector>\n      </bpmn2:extensionElements>\n      <bpmn2:incoming>SequenceFlow_1nfh3bv</bpmn2:incoming>\n      <bpmn2:outgoing>SequenceFlow_09r7cz0</bpmn2:outgoing>\n    </bpmn2:serviceTask>\n    <bpmn2:serviceTask id=\"ServiceTask_0zx0xvh\" name=\"Auto Approve Transaction\">\n      <bpmn2:extensionElements>\n        <camunda:finalizeTransactionConnector>        <camunda:FTType>approve</camunda:FTType>\n</camunda:finalizeTransactionConnector>\n      </bpmn2:extensionElements>\n      <bpmn2:incoming>SequenceFlow_1uy8xf5</bpmn2:incoming>\n      <bpmn2:outgoing>SequenceFlow_1u09hup</bpmn2:outgoing>\n    </bpmn2:serviceTask>\n  </bpmn2:process>\n  <bpmn2:message id=\"Message_0etuxrg\" />\n  <bpmn2:signal id=\"Signal_00b7da8\" name=\"${transactionKey}-approve\" />\n  <bpmn2:signal id=\"Signal_1r9e37h\" name=\"${transactionKey}-reject\" />\n  <bpmndi:BPMNDiagram id=\"BPMNDiagram_1\">\n    <bpmndi:BPMNPlane id=\"BPMNPlane_1\" bpmnElement=\"Process_1\">\n      <bpmndi:BPMNShape id=\"_BPMNShape_StartEvent_2\" bpmnElement=\"StartEvent_1\">\n        <dc:Bounds x=\"51\" y=\"225\" width=\"36\" height=\"36\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"24\" y=\"261\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_0n5tuob_di\" bpmnElement=\"SequenceFlow_0n5tuob\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"87\" y=\"243\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"143\" y=\"243\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"156\" y=\"218\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNShape id=\"ScriptTask_0h53xio_di\" bpmnElement=\"ScriptTask_0h53xio\">\n        <dc:Bounds x=\"143\" y=\"203\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"EndEvent_0iqxc3z_di\" bpmnElement=\"EndEvent_0iqxc3z\">\n        <dc:Bounds x=\"733.7215639810427\" y=\"225\" width=\"36\" height=\"36\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"706.7215639810427\" y=\"261\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_0cz3jwp_di\" bpmnElement=\"SequenceFlow_0cz3jwp\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"641\" y=\"243\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"734\" y=\"243\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"855.5\" y=\"218\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNShape id=\"ServiceTask_1o4h05o_di\" bpmnElement=\"ServiceTask_1o4h05o\">\n        <dc:Bounds x=\"541\" y=\"203\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"CallActivity_1hv8r3v_di\" bpmnElement=\"CallActivity_1hv8r3v\">\n        <dc:Bounds x=\"342\" y=\"203\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_1tghhxz_di\" bpmnElement=\"SequenceFlow_1tghhxz\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"243\" y=\"243\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"342\" y=\"243\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"247\" y=\"218\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_1bhwj13_di\" bpmnElement=\"SequenceFlow_1bhwj13\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"442\" y=\"243\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"541\" y=\"243\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"446\" y=\"218\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNShape id=\"BoundaryEvent_15yydqb_di\" bpmnElement=\"BoundaryEvent_15yydqb\">\n        <dc:Bounds x=\"424\" y=\"265\" width=\"36\" height=\"36\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"397\" y=\"301\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"BoundaryEvent_0ep625i_di\" bpmnElement=\"BoundaryEvent_0ep625i\">\n        <dc:Bounds x=\"424\" y=\"185\" width=\"36\" height=\"36\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"347\" y=\"165\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_1nfh3bv_di\" bpmnElement=\"SequenceFlow_1nfh3bv\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"442\" y=\"185\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"442\" y=\"121\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"541\" y=\"121\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"411\" y=\"143\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_1uy8xf5_di\" bpmnElement=\"SequenceFlow_1uy8xf5\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"442\" y=\"301\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"442\" y=\"368\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"541\" y=\"368\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"411\" y=\"324.5\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNShape id=\"EndEvent_1ecm56z_di\" bpmnElement=\"EndEvent_1ecm56z\">\n        <dc:Bounds x=\"734\" y=\"103.29866117404737\" width=\"36\" height=\"36\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"707\" y=\"139.29866117404737\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_09r7cz0_di\" bpmnElement=\"SequenceFlow_09r7cz0\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"641\" y=\"121\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"734\" y=\"121\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"658\" y=\"105.5\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNShape id=\"EndEvent_1hyjnlk_di\" bpmnElement=\"EndEvent_1hyjnlk\">\n        <dc:Bounds x=\"734.4696189495365\" y=\"350\" width=\"36\" height=\"36\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"707.4696189495365\" y=\"386\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNEdge id=\"SequenceFlow_1u09hup_di\" bpmnElement=\"SequenceFlow_1u09hup\">\n        <di:waypoint xsi:type=\"dc:Point\" x=\"641\" y=\"368\" />\n        <di:waypoint xsi:type=\"dc:Point\" x=\"735\" y=\"368\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"651\" y=\"343\" width=\"90\" height=\"20\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNShape id=\"ServiceTask_0e3ny5u_di\" bpmnElement=\"ServiceTask_0e3ny5u\">\n        <dc:Bounds x=\"541\" y=\"81\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"ServiceTask_0zx0xvh_di\" bpmnElement=\"ServiceTask_0zx0xvh\">\n        <dc:Bounds x=\"541\" y=\"328\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n</bpmn2:definitions>",
@@ -45,7 +51,7 @@
   ]
 
   var piData = {
-    "_id" : "5a65b691d6e82b6c28442d48",
+    "id" : "5a65b691d6e82b6c28442d48",
     "processDefinitionName" : "BoundaryInterrupting",
     "processDefinitionId" : "5a65b691d6e82b6c28442d46",
     "processDefinitionBpmnId" : "Process_1",
@@ -160,27 +166,27 @@
     "_oldVersion" : "51c4efb1-762d-4dc4-bb3e-d48f48a48087"
 };
 
-  function setXml(index){
-    var oeViewer = document.getElementById('viewer');
+  function setXml(index,eNum){
+    var oeViewer = document.getElementById('viewer'+eNum);
     oeViewer.set('bpmnXml', xmldata[index]);
   }
 
 
-  function toggleProcessInstance(){
-    var oeViewer = document.getElementById('viewer');
+  function toggleProcessInstance(eNum){
+    var oeViewer = document.getElementById('viewer'+eNum);
     if(oeViewer.processInstance){
       oeViewer.set('processInstance', undefined);
     } else {
       oeViewer.set('processInstance', piData);
     }
   }
-  function zoomIn(){
-    var oeViewer = document.getElementById('viewer');
+  function zoomIn(eNum){
+    var oeViewer = document.getElementById('viewer'+eNum);
     var zoom = oeViewer.zoom();
     oeViewer.zoom(zoom+0.1);    
   }
-  function zoomOut(){
-    var oeViewer = document.getElementById('viewer');
+  function zoomOut(eNum){
+    var oeViewer = document.getElementById('viewer'+eNum);
     var zoom = oeViewer.zoom();
     oeViewer.zoom(zoom-0.1);    
   }
@@ -190,17 +196,31 @@
 
 <body unresolved>
   <div class="vertical-section-container centered">
-    <h3>BPMN Viewer</h3>
+    <h3>BPMN Viewer Overlay</h3>
     <demo-snippet id="snippet">
       <template>
-        <input type="button" data-index="0" onclick="setXml(0)" value="Xml-1">
-        <input type="button" data-index="1" onclick="setXml(1)" value="Xml-2">
-        <input type="button" data-index="1" onclick="setXml(2)" value="Xml-3">
-        <input type="button" onclick="toggleProcessInstance()" value="Process Instance">
-        <input type="button" onclick="zoomIn()" value="++">
-        <input type="button" onclick="zoomOut()" value="--">
+        <input type="button" data-index="0" onclick="setXml(0,1)" value="Xml-1">
+        <input type="button" data-index="1" onclick="setXml(1,1)" value="Xml-2">
+        <input type="button" data-index="1" onclick="setXml(2,1)" value="Xml-3">
+        <input type="button" onclick="toggleProcessInstance(1)" value="Process Instance">
+        <input type="button" onclick="zoomIn(1)" value="++">
+        <input type="button" onclick="zoomOut(1)" value="--">
 
-        <oe-bpmn-viewer id="viewer" style="height: 400px"></oe-bpmn-viewer>
+        <oe-bpmn-viewer id="viewer1" style="height: 400px"></oe-bpmn-viewer>
+      </template>
+    </demo-snippet>
+
+    <h3>BPMN Viewer Sidepanel</h3>
+    <demo-snippet id="snippet">
+      <template>
+        <input type="button" data-index="0" onclick="setXml(0,2)" value="Xml-1">
+        <input type="button" data-index="1" onclick="setXml(1,2)" value="Xml-2">
+        <input type="button" data-index="1" onclick="setXml(2,2)" value="Xml-3">
+        <input type="button" onclick="toggleProcessInstance(2)" value="Process Instance">
+        <input type="button" onclick="zoomIn(2)" value="++">
+        <input type="button" onclick="zoomOut(2)" value="--">
+
+        <oe-bpmn-viewer token-view-mode="overlay" token-viewer="oe-processtoken-overlay" id="viewer2" style="height: 400px"></oe-bpmn-viewer>
       </template>
     </demo-snippet>
   </div>

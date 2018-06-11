@@ -159,7 +159,7 @@
       bpmnViewer.set('bpmnXml', xml1);
     });
 
-    test('oe-process-token raises rerun event', function (done) {
+    test('oe-processtoken-overlay raises rerun event', function (done) {
       var bpmnViewer = fixture('basic');
       bpmnViewer.set('processInstance', piData);
       
@@ -171,7 +171,7 @@
       });
       bpmnViewer.addEventListener('oe-bpmn-viewer-loaded', function(e){        
         var canvas = bpmnViewer.viewer.get('canvas');
-        var scriptOverlay = bpmnViewer.querySelector('[data-container-id="ServiceTask_xml1"] oe-process-token');
+        var scriptOverlay = bpmnViewer.querySelector('[data-container-id="ServiceTask_xml1"] oe-processtoken-overlay');
         expect(scriptOverlay,'Overlay element not created').to.be.ok;
         scriptOverlay._rerun();
       });
